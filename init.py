@@ -8,6 +8,7 @@ from typing import Callable
 
 import numpy as np
 from sentence_transformers import SentenceTransformer
+
 from queue import PriorityQueue
 
 logger = logging.getLogger(__name__)
@@ -64,11 +65,20 @@ def init_embeddings() -> np.ndarray:
     
     return embeddings
 
-def init_queues() -> dict[Callable, PriorityQueue]:
+"""
+{
+"music":{"commandq":Queue, "responseq":Queue}
+}
+"""
+
+def init_queues():
     logger.log(20, "Initializing Queues.....")
-    queues_list: dict[Callable, PriorityQueue] = {}
+    queues_list = {}
     for function in FUNCTIONS_LIST["functions"]:
-        queues_list[function["func"]] = PriorityQueue()
+        queues_list[function["func"]] = {"commandq":PriorityQueue(), "responseq": PriorityQueue()}
+    
+    queues_list["main queue"] = {"commandq":PriorityQueue(), "responseq":None}
+    queues_list["status queue"] = {"commandq":PriorityQueue(), "responseq":None}
     
     logger.log(20, "Initialised Queues")
     return queues_list
@@ -91,5 +101,3 @@ def init() :
     ]
 
     return return_dict
-
-print(init())
