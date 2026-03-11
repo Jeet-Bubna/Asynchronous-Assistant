@@ -1,7 +1,3 @@
-def music():
-    pass
-
-
 """
 Problem: How to know which song the user wants to play?
 
@@ -11,7 +7,7 @@ Problem: How to know which song the user wants to play?
 2) We could build an algorithm or smth which denotes that this phrase or word is how likely to be a song name
     Yes, and this would really make me understand algorigthms
     BUT, This might take too much time and i probably dont have enough math knowledge to accomplish this properly
-3) We could have a list of all the songs, atleast populat songs in a file, and then check if it matches
+3) We could have a list of all the songs atleast populat songs in a file, and then check if it matches
     Yes, and this would make the program faster and more reliable, and this will be SUPER easy to implement
     BUT, This type of data might not be available, and is not that elegent, and will not handle well with edge cases
 

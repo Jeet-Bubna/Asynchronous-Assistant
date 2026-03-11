@@ -1,0 +1,19 @@
+{
+    "functions": [
+        {
+            "name": "music",
+            "args": ["text"],
+            "func": "modules.music.music"
+        },
+        {
+            "name": "time",
+            "args": ["text"],
+            "func": "modules.timer.timer"
+        },
+        {
+            "name": "search",
+            "args": ["text"],
+            "func": "modules.search.search"
+        }
+    ]
+}
