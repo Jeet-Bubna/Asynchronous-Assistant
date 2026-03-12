@@ -1,5 +1,6 @@
 from threading import Thread
 from typing import Callable, Iterable, Mapping, Any
+from queue import PriorityQueue
 
 import logging
 logger = logging.getLogger(__name__)
@@ -12,7 +13,7 @@ class WorkerThread(Thread):
         self._args = (new_args, )
 
 class Packets:
-    def __init__(self, content:str, destination:Callable, priority:float) -> None:
+    def __init__(self, content:str, queue:PriorityQueue, worker:WorkerThread) -> None:
         self._content = content
-        self._destiation = destination
-        self._priority = priority
+        self._queue = queue
+        self._worker = worker
