@@ -5,17 +5,17 @@ FUNCTIONS_LIST = {
         {
             "name": "music",
             "args": ["text"],
-            "func": music
+            "func": music.main
         },
         {
             "name": "time",
             "args": ["text"],
-            "func": timer
+            "func": timer.main
         },
         {
             "name": "search",
             "args": ["text"],
-            "func": search
+            "func": search.main
         }
     ]
 }

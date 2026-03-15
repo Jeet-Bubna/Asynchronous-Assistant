@@ -10,10 +10,10 @@ class WorkerThread(Thread):
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
     
     def update_args(self, new_args):
-        self._args = (new_args, )
+        self._args = new_args 
 
 class Packets:
-    def __init__(self, content:str, queue:PriorityQueue, worker:WorkerThread) -> None:
+    def __init__(self, content:str, queue:dict[PriorityQueue, PriorityQueue], worker:WorkerThread) -> None:
         self._content = content
         self._queue = queue
         self._worker = worker

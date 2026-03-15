@@ -42,7 +42,7 @@ def init_logger():
 
     return logger
 
-def init_threads() -> dict[str, WorkerThread]:
+def init_threads(mainq, listeningqs) -> dict[str, WorkerThread]:
     logging.log(20, "Initialising Threads.....")
     worker_list : dict[str, WorkerThread] = {}
     functions = FUNCTIONS_LIST
@@ -51,13 +51,15 @@ def init_threads() -> dict[str, WorkerThread]:
         worker = WorkerThread(target=path)
         worker_list[function["name"]] = worker
     
-    worker_list["input"] = WorkerThread(target=input_function)
-    worker_list["input"].start()
+    worker_list["broadcaster"] = WorkerThread(target=broadcaster, args=(mainq["commandq"], ))
+    worker_list["broadcaster"].start()
 
-    logger.log(20, "Input thread has been started....")
+    logger.log(20, "Broadcaster thread has been started....")
 
-    worker_list["broadcaster"] = WorkerThread(target=broadcaster)
-    worker_list["listener"] = WorkerThread(target=listener)
+    worker_list["listener"] = WorkerThread(target=listener, args=(listeningqs, ))
+    worker_list["listener"].start()
+    
+    logger.log(20, "Listener thread has been started....")
 
     logging.log(20, "Workers have been initialised")
     return worker_list
@@ -104,9 +106,15 @@ def init() :
     init_logger()
     logger.log(20, "Logger has been initialised")
 
-    workers_list = init_threads()
     embeddings = init_embeddings()
     queues = init_queues()
+
+    listening_qs = {}
+    for obj in queues:
+       list_queue = queues[obj]["responseq"]
+       listening_qs[obj] = list_queue
+
+    workers_list = init_threads(queues["main queue"], listening_qs)
 
     return_dict = {
         "workers": workers_list,
