@@ -4,13 +4,12 @@ from classes import WorkerThread, Packets
 from queue import PriorityQueue
 import re
 import numpy as np
-from sentence_transformers import SentenceTransformer, util
 
 from settings import FUNCTIONS_LIST, ACCEPTABLE_RATIO, CATEGORIES
 
 logger = logging.getLogger(__name__)
 
-def categorise_embeddings(embeddings, model:SentenceTransformer, text:str):
+def categorise_embeddings(embeddings, encode, text:str):
     jarvis_pattern = r"^jarvis\b"
     match = re.match(jarvis_pattern, text)
     if not match:
@@ -18,16 +17,18 @@ def categorise_embeddings(embeddings, model:SentenceTransformer, text:str):
         return ""
     try:
         text = text.replace("jarvis", "")
-        text_embedding = model.encode(text, normalize_embeddings=True)          # Finds the vector values for the text that we have inputed
-        scores = util.cos_sim(text_embedding, embeddings)[0]           # Calculates the score
-        if scores.max().item() < ACCEPTABLE_RATIO:                          
-            logger.log(10, "No suitable match... scores below acceptable ratio")
-            return ''
+        text_embedding = encode(text)          
+        # Calculate cosine similarity - encode alr uses l2 normalisation, so cosine similarity is just dot product
+        similarities = np.dot(embeddings, text_embedding.T).flatten()
+        best_idx = np.argmax(similarities)
+        confidence = similarities[best_idx]
+        category = [cat for cat in CATEGORIES.keys()][best_idx]
+
+        if confidence < ACCEPTABLE_RATIO:
+            logger.info("Confidence below acceptable ratio - no category detected")
         else:
-            best_idx = int(scores.argmax().item())      
-            cat = [category for category, _ in CATEGORIES.items()][best_idx]
-            logger.log(20, f"Cateogory found: {cat}")
-            return cat
+            return category
+
     except KeyError:
         logger.critical('Detect Category failed - key error', exc_info=True)
     
@@ -35,7 +36,7 @@ def categorise_embeddings(embeddings, model:SentenceTransformer, text:str):
     return ""
 
 
-def categoriser(text:str, embeddings, model:SentenceTransformer):
+def categoriser(text:str, embeddings, model):
     """
     Categorise the text according to embeddings
 
@@ -75,7 +76,7 @@ def input_function(input_list):
 
     workers_list = input_list["workers"]
     embeddings = input_list["embeddings"]["embeddings"]
-    model = input_list["embeddings"]["model"]
+    encode = input_list["embeddings"]["encode"]
 
     logger.debug(f"TYPE: {type(embeddings)}")
     logger.debug(f"CONTENT: {embeddings}")
@@ -86,7 +87,7 @@ def input_function(input_list):
 
     while isRunning:
         user_input = input("YOU: ")
-        category = categoriser(user_input, embeddings, model)
+        category = categoriser(user_input, embeddings, encode)
         if(category == "end"):
             isRunning = False
             priority = calculatePriority(True)

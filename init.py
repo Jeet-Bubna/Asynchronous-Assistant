@@ -3,16 +3,21 @@ import logging
 import os
 
 from classes import WorkerThread
-from settings import FUNCTIONS_LIST, EMBEDDING_FILE, CATEGORIES
+from settings import FUNCTIONS_LIST, EMBEDDING_FILE, CATEGORIES, MODEL_PATH, MODEL_NAME
 from typing import Callable
 
 import numpy as np
-from sentence_transformers import SentenceTransformer
+from optimum.onnxruntime import ORTModelForFeatureExtraction
+from transformers import AutoTokenizer, pipeline
 
 from queue import PriorityQueue
 from input import input_function
 from broadcaster import broadcaster
 from listener import listener
+
+# 1. Force Offline Mode globally before loading the model
+os.environ['TRANSFORMERS_OFFLINE'] = '1'
+os.environ['HF_HUB_OFFLINE'] = '1'
 
 logger = logging.getLogger(__name__)
 
@@ -65,8 +70,49 @@ def init_threads(mainq, listeningqs) -> dict[str, WorkerThread]:
     return worker_list
 
 def init_embeddings():
-     
-    model = SentenceTransformer('all-MiniLM-L6-v2') 
+    
+    if os.path.exists(MODEL_PATH):
+        logger.info("Loading {MODEL_NAME} locally")
+        os.environ['TRANSFORMERS_OFFLINE'] = '1'
+        os.environ['HF_HUB_OFFLINE'] = '1'
+        model = ORTModelForFeatureExtraction.from_pretrained(MODEL_PATH, local_files_only=True)
+        tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH, local_files_only=True)
+
+    else:
+        logger.info(f"Saving {MODEL_NAME} for the first time in memory!")
+        model = ORTModelForFeatureExtraction.from_pretrained(MODEL_NAME, export=True)
+        tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+        model.save_pretrained(MODEL_PATH)
+        print(f"Model saved to {MODEL_PATH}")
+
+    def encode(sentence):
+        """
+        Takes a sentence, and uses the extractor to return 
+        a normalised embedding vector
+        """
+
+        # Tokenize the text, and allow padding and truncation, to get equal spaced arrays
+        inputs = tokenizer(
+            sentence,
+            padding=True,
+            truncation=True,
+            return_tensors="np"
+        )
+
+        # run onxx model 
+        outputs = model(**inputs)
+
+        # Mean pooling: Dont use CLS token [the first token in the array which is 
+        # noramlly used to classify sentences] because this model is trained to 
+        # excel at mean pooling, and also outputs[0] is the last hidden state
+        embeddings = np.mean(outputs[0], axis=1)
+
+        #Normalisation - to basically make calucaltion easier and mitigate the effect
+        # of the frequency of words in long sentences, by basicaly making the relative
+        # vector have a square length of 1 to calucalte cosine similarity
+        norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
+        return embeddings / norms        
+
     if os.path.exists(EMBEDDING_FILE):
         logger.log(20, "Found existing embeddings. Loading...")
         embeddings = np.load(EMBEDDING_FILE, allow_pickle=True)
@@ -74,11 +120,13 @@ def init_embeddings():
         logger.debug(f"CONTENT: {embeddings}")
     else:
         logger.log(20, "No embeddings found. Generating now (this may take a moment)...")
-        embeddings = model.encode([desired_category for _, desired_category in CATEGORIES.items()], normalize_embeddings=True)
+        extractor = pipeline("feature-extraction", model=model, tokenizer=tokenizer) # type: ignore
+        categories = [description for description in CATEGORIES.values()]
+        embeddings = encode(sentence=categories)
         np.save(EMBEDDING_FILE, embeddings)
     
     logger.log(10, f"THE EMBEDDINGS OBJECT IS:")    
-    return {"embeddings": embeddings, "model": model}
+    return {"embeddings": embeddings, "encode": encode}
 
 """
 {
