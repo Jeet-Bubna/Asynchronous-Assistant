@@ -22,7 +22,7 @@ FUNCTIONS_LIST = {
 
 EMBEDDING_FILE = "stored_embeddings.npy"
 
-ACCEPTABLE_RATIO = 0.3
+ACCEPTABLE_RATIO = 0.5
 
 CATEGORIES  = {'music': 'music player', 'timer':'timer', 'search':'search', 'end':'end the program'}  
 
