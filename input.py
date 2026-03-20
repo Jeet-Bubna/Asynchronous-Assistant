@@ -85,6 +85,7 @@ def input_function(input_list):
 
     queues = input_list["queues"]
     main_queue = queues["main queue"]
+    listening_queue = queues["listener queue"]
 
     while isRunning:
         user_input = input("YOU: ")
@@ -92,7 +93,7 @@ def input_function(input_list):
         if(category == "end"):
             isRunning = False
             priority = calculatePriority(True)
-            packet = Packets("end", {"queue": queue, "listening_queue":queues["listener queue"]}, workers_list["listener"]) # if end, send end in message and default queue and workers objects
+            packet = Packets("end", {"queue": main_queue, "listening_queue":listening_queue}) # if end, send end in message and default queue and workers objects
             main_queue.put((priority, packet))
             logger.info(f"END COMMAND HAS BEEN PUT IN MAIN QUEUE")
             return "ending"

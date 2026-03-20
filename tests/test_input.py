@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 from input import input_function, categorise_embeddings, categoriser
 import numpy as np
+from classes import WorkerThread, PriorityQueue
 
 class TestInput(unittest.TestCase):
 
@@ -49,24 +50,20 @@ class TestInput(unittest.TestCase):
 
         mocked_logger.info.assert_called() 
     
-"""
+    @patch("input.categoriser")
     @patch("input.logger")
     @patch("builtins.input", return_value="jarvis end the program")
-    @patch("input.categoriser")
     def test_input_function(self, mocked_logger, mocked_input, mocked_categoriser):
         mocked_input_list = {
         "workers": {"music":WorkerThread(target=lambda x: print("test function"))},
         "embeddings": {"embeddings": np.array([1,2,3,4,5]), "encode":""},
-        "queues":{"main queue":PriorityQueue(), "music":PriorityQueue()}
+        "queues":{"main queue":PriorityQueue(), "music":PriorityQueue(), "listener queue":PriorityQueue()}
         }
         
-        mocked_categoriser = MagicMock()
         mocked_categoriser.return_value = "end"
-
         result = input_function(mocked_input_list)
-        self.assertEqual(result, "ending")
-        mocked_logger.info.assert_called()
-"""
+        self.assertEqual(result, "ending")  
+
 
 if __name__ == '__main__':
     unittest.main()
