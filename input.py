@@ -1,7 +1,6 @@
 import logging
-from classes import WorkerThread, Packets
+from classes import Packets
 
-from queue import PriorityQueue
 import re
 import numpy as np
 
@@ -14,7 +13,7 @@ def categorise_embeddings(embeddings, encode, text:str):
     match = re.match(jarvis_pattern, text)
     if not match:
         logger.log(10, "Lead not found in command")
-        return ""
+        return "lead error"
     try:
         text = text.replace("jarvis", "")
         text_embedding = encode(text)          
@@ -26,6 +25,7 @@ def categorise_embeddings(embeddings, encode, text:str):
 
         if confidence < ACCEPTABLE_RATIO:
             logger.info("Confidence below acceptable ratio - no category detected")
+            return "low confidence"
         else:
             return category
 
