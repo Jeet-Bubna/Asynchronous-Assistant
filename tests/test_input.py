@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch 
+from unittest.mock import patch, MagicMock
 from input import input_function, categorise_embeddings, categoriser
 from classes import WorkerThread
 import numpy as np
@@ -7,16 +7,6 @@ from queue import PriorityQueue
 
 class TestInput(unittest.TestCase):
 
-    def input_test(self):
-        self.works = True
-    
-    def setUp(self):
-        self.input_list = {
-        "workers": {"music":WorkerThread(target=self.input_test)},
-        "embeddings": {"embeddings": np.array([1,2,3,4,5]), "encode":""},
-        "queues":{"main queue":PriorityQueue(), "music":PriorityQueue()}
-        }
-    
     @patch('input.logger')
     @patch('input.CATEGORIES', {'cat1': 0})
     def test_categorise_embeddings(self, mocked_logger):
@@ -60,7 +50,25 @@ class TestInput(unittest.TestCase):
         self.assertEqual(result, "search")
 
         mocked_logger.info.assert_called() 
+    
+"""
+    @patch("input.logger")
+    @patch("builtins.input", return_value="jarvis end the program")
+    @patch("input.categoriser")
+    def test_input_function(self, mocked_logger, mocked_input, mocked_categoriser):
+        mocked_input_list = {
+        "workers": {"music":WorkerThread(target=lambda x: print("test function"))},
+        "embeddings": {"embeddings": np.array([1,2,3,4,5]), "encode":""},
+        "queues":{"main queue":PriorityQueue(), "music":PriorityQueue()}
+        }
         
+        mocked_categoriser = MagicMock()
+        mocked_categoriser.return_value = "end"
+
+        result = input_function(mocked_input_list)
+        self.assertEqual(result, "ending")
+        mocked_logger.info.assert_called()
+"""
 
 if __name__ == '__main__':
     unittest.main()

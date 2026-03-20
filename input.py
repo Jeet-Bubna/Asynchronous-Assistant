@@ -94,14 +94,14 @@ def input_function(input_list):
             priority = calculatePriority(True)
             packet = Packets("end", {"queue": queue, "listening_queue":queues["listener queue"]}, workers_list["listener"]) # if end, send end in message and default queue and workers objects
             main_queue.put((priority, packet))
-            logger.log(20, f"END COMMAND HAS BEEN PUT IN MAIN QUEUE")
-            return 1
+            logger.info(f"END COMMAND HAS BEEN PUT IN MAIN QUEUE")
+            return "ending"
 
-        if(category != ""):
+        if(category != "low confidence"):
             priority = calculatePriority(False)
             queue = queues[category]
             worker = workers_list[category]
             packet = Packets(user_input, {"queue": queue, "listening_queue":queues["listener queue"]}, worker) 
             main_queue.put((priority, packet))
-            logger.log(20, f"A PACKET {packet} with PRIORITY {priority} has been send to main queue")
+            logger.info(f"A PACKET {packet} with PRIORITY {priority} has been send to main queue")
  
