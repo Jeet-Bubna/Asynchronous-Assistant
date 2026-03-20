@@ -1,9 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock
 from input import input_function, categorise_embeddings, categoriser
-from classes import WorkerThread
 import numpy as np
-from queue import PriorityQueue
 
 class TestInput(unittest.TestCase):
 
