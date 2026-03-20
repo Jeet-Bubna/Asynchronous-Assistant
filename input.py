@@ -9,11 +9,6 @@ from settings import FUNCTIONS_LIST, ACCEPTABLE_RATIO, CATEGORIES
 logger = logging.getLogger(__name__)
 
 def categorise_embeddings(embeddings, encode, text:str):
-    jarvis_pattern = r"^jarvis\b"
-    match = re.match(jarvis_pattern, text)
-    if not match:
-        logger.log(10, "Lead not found in command")
-        return "lead error"
     try:
         text = text.replace("jarvis", "")
         text_embedding = encode(text)          
@@ -31,10 +26,15 @@ def categorise_embeddings(embeddings, encode, text:str):
 
     except KeyError:
         logger.critical('Detect Category failed - key error', exc_info=True)
+        return "key error"
     
-    logger.log(20, "No category detected")
-    return ""
-
+    except ValueError:
+        logger.critical("Detect Category failed - value error - are you using different models?", exc_info=True)
+        return "value error"
+    
+    except IndexError:
+        logger.critical("Detect Category failed - index error - the embeddings and FUNCTIONS are out of sync.", exc_info=True)
+        return "index error"
 
 def categoriser(text:str, embeddings, model):
     """
@@ -44,6 +44,11 @@ def categoriser(text:str, embeddings, model):
     Rest are delt with embeddings
     """
     cat = ""
+    jarvis_pattern = r"^jarvis\b"
+    match = re.match(jarvis_pattern, text)
+    if not match:
+        logger.info("Lead not found in command")
+        return "lead error"
 
     pattern = r"^(jarvis)\s+(.*?)\s+(?:of|by|from|in|for)\s+(.*)$"
     match = re.match(pattern, text, re.IGNORECASE)
@@ -54,7 +59,7 @@ def categoriser(text:str, embeddings, model):
             if func["name"] in module:
                 cat = func["name"]
                 logger.log(20, f"Cateogory found: {cat}")
-                print("Category found", cat)
+                logger.info("Category found", cat)
         
         return cat
 
