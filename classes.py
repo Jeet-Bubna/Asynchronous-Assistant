@@ -13,7 +13,7 @@ class WorkerThread(Thread):
         self._args = new_args 
 
 class Packets:
-    def __init__(self, content:str, queue:dict[PriorityQueue, PriorityQueue], worker:WorkerThread) -> None:
+    def __init__(self, content, queue, worker:WorkerThread|None =  None) -> None:
         self._content = content
         self._queue = queue
         self._worker = worker

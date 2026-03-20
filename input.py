@@ -78,11 +78,7 @@ def input_function(input_list):
     embeddings = input_list["embeddings"]["embeddings"]
     encode = input_list["embeddings"]["encode"]
 
-    logger.debug(f"TYPE: {type(embeddings)}")
-    logger.debug(f"CONTENT: {embeddings}")
-
     queues = input_list["queues"]
-
     main_queue = queues["main queue"]
 
     while isRunning:
@@ -91,8 +87,8 @@ def input_function(input_list):
         if(category == "end"):
             isRunning = False
             priority = calculatePriority(True)
-            packet = Packets("end", main_queue, workers_list["listener"]) # if end, send end in message and default queue and workers objects
-            main_queue['commandq'].put((priority, packet))
+            packet = Packets("end", {"queue": queue, "listening_queue":queues["listener queue"]}, workers_list["listener"]) # if end, send end in message and default queue and workers objects
+            main_queue.put((priority, packet))
             logger.log(20, f"END COMMAND HAS BEEN PUT IN MAIN QUEUE")
             return 1
 
@@ -100,7 +96,7 @@ def input_function(input_list):
             priority = calculatePriority(False)
             queue = queues[category]
             worker = workers_list[category]
-            packet = Packets(user_input, queue, worker) 
-            main_queue['commandq'].put((priority, packet))
+            packet = Packets(user_input, {"queue": queue, "listening_queue":queues["listener queue"]}, worker) 
+            main_queue.put((priority, packet))
             logger.log(20, f"A PACKET {packet} with PRIORITY {priority} has been send to main queue")
  

@@ -47,7 +47,7 @@ def init_logger():
 
     return logger
 
-def init_threads(mainq, listeningqs) -> dict[str, WorkerThread]:
+def init_threads(queues) -> dict[str, WorkerThread]:
     logging.log(20, "Initialising Threads.....")
     worker_list : dict[str, WorkerThread] = {}
     functions = FUNCTIONS_LIST
@@ -56,12 +56,12 @@ def init_threads(mainq, listeningqs) -> dict[str, WorkerThread]:
         worker = WorkerThread(target=path)
         worker_list[function["name"]] = worker
     
-    worker_list["broadcaster"] = WorkerThread(target=broadcaster, args=(mainq["commandq"], ))
+    worker_list["broadcaster"] = WorkerThread(target=broadcaster, args=(queues,))
     worker_list["broadcaster"].start()
 
     logger.log(20, "Broadcaster thread has been started....")
 
-    worker_list["listener"] = WorkerThread(target=listener, args=(listeningqs, ))
+    worker_list["listener"] = WorkerThread(target=listener, kwargs={"listening_queue":queues['listener queue'], "main_queue":queues["main queue"], "threads":worker_list})
     worker_list["listener"].start()
     
     logger.log(20, "Listener thread has been started....")
@@ -138,10 +138,10 @@ def init_queues():
     logger.log(20, "Initializing Queues.....")
     queues_list = {}
     for function in FUNCTIONS_LIST["functions"]:
-        queues_list[function["name"]] = {"commandq":PriorityQueue(), "responseq": PriorityQueue()}
+        queues_list[function["name"]] = PriorityQueue()
     
-    queues_list["main queue"] = {"commandq":PriorityQueue(), "responseq":None}
-    queues_list["status queue"] = {"commandq":PriorityQueue(), "responseq":None}
+    queues_list["main queue"] = PriorityQueue()
+    queues_list["listener queue"] = PriorityQueue() 
     
     logger.log(20, "Initialised Queues")
     logger.log(10, f"THE QUEUE OBJECT IS: {queues_list}")
@@ -156,13 +156,7 @@ def init() :
 
     embeddings = init_embeddings()
     queues = init_queues()
-
-    listening_qs = {}
-    for obj in queues:
-       list_queue = queues[obj]["responseq"]
-       listening_qs[obj] = list_queue
-
-    workers_list = init_threads(queues["main queue"], listening_qs)
+    workers_list = init_threads(queues)
 
     return_dict = {
         "workers": workers_list,
