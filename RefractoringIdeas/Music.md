@@ -1,57 +1,3 @@
-import vlc
-from yt_dlp import YoutubeDL
-import time
-
-# Using yt-dlp to download songs locally and play them using vlc, right now just to prove concept
-# TODO: implement the automatic linker generator and all
-
-ydl_opts = {
-        "format": "bestaudio/best",
-        "quiet": True,
-        "outtmpl": "song.%(ext)s"
-    }
-
-#  url = "https://www.youtube.com/watch?v=4TVT7IOqH1Y" #for now, for testing purposes
-#         with YoutubeDL(ydl_opts) as ydl:
-#             info = ydl.extract_info(url, download=True)
-#             filename = ydl.prepare_filename(info)
-        
-#         player = vlc.MediaPlayer(filename)
-#         player.play()
-#         time.sleep(10)
-#         player.pause()
-#         time.sleep(4)
-#         player.play()
-
-import logging
-logger = logging.getLogger('main.music')
-
-def music_is_playing():
-    return True #For now
-
-def stop_music():
-    logger.info('stopping music')
-
-def play_music():
-    logger.info('playing music')
-
-def music(queue):
-    while True:
-        try:
-            text = queue.get()
-            logger.debug(f'Text recieved in music_thread: {text}')
-            if text == 'end':
-                if music_is_playing():
-                    stop_music()
-                    logger.info('ending music')
-                break
-            else:
-                play_music()
-        except Exception as e:
-            logger.critical('Error occurred', e)
-
-
-
 """
 Problem: How to know which song the user wants to play?
 
@@ -61,7 +7,7 @@ Problem: How to know which song the user wants to play?
 2) We could build an algorithm or smth which denotes that this phrase or word is how likely to be a song name
     Yes, and this would really make me understand algorigthms
     BUT, This might take too much time and i probably dont have enough math knowledge to accomplish this properly
-3) We could have a list of all the songs, atleast populat songs in a file, and then check if it matches
+3) We could have a list of all the songs atleast populat songs in a file, and then check if it matches
     Yes, and this would make the program faster and more reliable, and this will be SUPER easy to implement
     BUT, This type of data might not be available, and is not that elegent, and will not handle well with edge cases
 
