@@ -4,7 +4,7 @@ import random
 
 logger = logging.getLogger(__name__)
 
-def main(queues, event):
+def main(queues, event, run_once = False):
 
     isRunning = True
 
@@ -42,3 +42,6 @@ def main(queues, event):
 
         except Exception as e:
             logger.critical(f"MUSIC: ERROR: {e}")
+        
+        if run_once:
+            isRunning = False

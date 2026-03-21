@@ -20,6 +20,14 @@ class TestMusic(unittest.TestCase):
         result = main(self.queues, self.event)
 
         self.assertEqual(result, "ending")
+    
+    def test_music_play(self):
+        self.queues['queue'].put((1, Packets("jarvis play some techno" )))
+        self.event.set()
+        main(self.queues, self.event, run_once=True)
+
+        priority, packet = self.queues['listening_queue'].get(timeout=2)
+        self.assertTrue(packet._content['started'])
 
 if __name__ == "__main__":
     unittest.main()
