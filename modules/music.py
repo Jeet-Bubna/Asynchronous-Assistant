@@ -1,8 +1,25 @@
 from classes import Packets
 import logging
+from queue import ShutDown
 import random
 
 logger = logging.getLogger(__name__)
+
+def end_main(listening_queue, event):
+    logger.info("Recieved END. Returning....") 
+    listening_queue.put(
+        (1, Packets(
+            content={
+                "started":True,
+                "function":"music",
+                "end":True
+            }, queue=listening_queue
+        ))
+    )
+
+    event.clear()
+    isRunning = False
+    return "ending"
 
 def main(queues, event, run_once = False):
 
@@ -23,25 +40,18 @@ def main(queues, event, run_once = False):
             content = packet._content
 
             if content == "end":
-                logger.info("Recieved END. Returning....") 
-                listening_queue.put(
-                    (1, Packets(
-                        content={
-                            "started":True,
-                            "function":"music",
-                            "end":True
-                        }, queue=listening_queue
-                    ))
-                )
+                return end_main(listening_queue, event)
 
-                event.clear()
-                isRunning = False
-                return "ending"
             else:
                 logger.info("Playing music....")
 
-        except Exception as e:
-            logger.critical(f"MUSIC: ERROR: {e}")
+        except KeyError as e:
+            logger.critical(f"MUSIC: KEY ERROR: {e}", exc_info=True)
+            return end_main(listening_queue, event)
+        
+        except ShutDown as e:
+            logger.critical(f"MUSIC: SHUTDOWN - queue was shutdown: {e}", exc_info=True)
+            return end_main(listening_queue, event)
         
         if run_once:
             isRunning = False
