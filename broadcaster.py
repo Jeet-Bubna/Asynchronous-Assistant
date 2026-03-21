@@ -2,12 +2,12 @@ from queue import PriorityQueue
 from classes import Packets, WorkerThread
 import logging
 
-isRunning = True
-isEnding = False
 
 logger = logging.getLogger(__name__)
 
 def broadcaster(queues):
+    isRunning = True
+    isEnding = False
     main_queue = queues["main queue"]
     logger.debug("Broadcaster has recieved the args")
     logger.debug(f"Type of Main_Queue is: {type(main_queue)}")
