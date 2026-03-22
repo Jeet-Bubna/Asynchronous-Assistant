@@ -6,7 +6,7 @@ import traceback
 
 logger = logging.getLogger(__name__)
 
-def listener(listening_queue, main_queue, threads):
+def listener(listening_queue, main_queue, threads, event):
     isRunning = True
     RUNNING_STATUS = {}
     for function in FUNCTIONS_LIST["functions"]:
