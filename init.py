@@ -3,6 +3,7 @@ import logging
 import os
 
 from classes import WorkerThread
+from threading import Event
 from settings import FUNCTIONS_LIST, EMBEDDING_FILE, CATEGORIES, MODEL_PATH, MODEL_NAME
 from typing import Callable
 
@@ -47,22 +48,34 @@ def init_logger():
 
     return logger
 
-def init_threads(queues) -> dict[str, WorkerThread]:
+def init_threads(queues, run_test=False) :
     logging.log(20, "Initialising Threads.....")
-    worker_list : dict[str, WorkerThread] = {}
+    worker_list = {}
     functions = FUNCTIONS_LIST
     for function in functions["functions"]:
         path = function["func"]
-        worker = WorkerThread(target=path)
-        worker_list[function["name"]] = worker
+        event = Event()
+        worker = WorkerThread(target=path, args=(queues, event))
+        worker_object = {
+            "thread": worker,
+            "event": event
+        }
+        worker_list[function["name"]] = worker_object
+        if not run_test :
+            worker.start()
     
-    worker_list["broadcaster"] = WorkerThread(target=broadcaster, args=(queues,))
-    worker_list["broadcaster"].start()
+    worker_event = Event()
+    worker_list["broadcaster"] = {"thread":WorkerThread(target=broadcaster, args=(queues,worker_event)), 
+                                  "event": worker_event}
+    if not run_test:
+        worker_list["broadcaster"]['thread'].start()
 
     logger.log(20, "Broadcaster thread has been started....")
 
-    worker_list["listener"] = WorkerThread(target=listener, kwargs={"listening_queue":queues['listener queue'], "main_queue":queues["main queue"], "threads":worker_list})
-    worker_list["listener"].start()
+    listener_event = Event()
+    worker_list["listener"] = {"thread": WorkerThread(target=listener, kwargs={"listening_queue":queues['listener queue'], "main_queue":queues["main queue"], "threads":worker_list, "event":listener_event}, )}
+    if not run_test:
+        worker_list["listener"]["thread"].start()
     
     logger.log(20, "Listener thread has been started....")
 

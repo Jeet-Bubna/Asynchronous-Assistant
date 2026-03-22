@@ -5,7 +5,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def broadcaster(queues):
+def broadcaster(queues, event):
     isRunning = True
     isEnding = False
     main_queue = queues["main queue"]
