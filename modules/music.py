@@ -4,11 +4,11 @@ import logging
 from queue import ShutDown
 import random
 from time import sleep
-from settings import TIME_TO_JOIN_THREAD
 
 logger = logging.getLogger(__name__)
 
 def end_main(listening_queue, event, playing_thread:Thread, error = None):
+    from settings import TIME_TO_JOIN_THREAD
     logger.info("Recieved END. Returning....") 
     try:
         playing_thread.join(timeout=TIME_TO_JOIN_THREAD)
