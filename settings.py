@@ -5,7 +5,7 @@ FUNCTIONS_LIST = {
         {
             "name": "music",
             "args": ["text"],
-            "func": music.main
+            "func": music
         },
         {
             "name": "time",
@@ -29,3 +29,5 @@ CATEGORIES  = {'music': 'music player', 'timer':'timer', 'search':'search', 'end
 MODEL_PATH = "./local_model"
 
 MODEL_NAME ="sentence-transformers/all-MiniLM-L6-v2"
+
+TIME_TO_JOIN_THREAD = 5

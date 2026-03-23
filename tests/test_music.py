@@ -17,7 +17,7 @@ class TestMusic(unittest.TestCase):
     def test_music_end(self):
         self.queues['queue'].put((1, Packets("end", queue="test_queue_should_never_get_Called")))
         self.event.set()
-        result = main(self.queues, self.event)
+        result = main(self.queues, self.event, run_once=True)
 
         self.assertEqual(result, "ending")
     
