@@ -45,14 +45,15 @@ def listener(listening_queue, main_queue, threads, event):
                 isRunning = False
                 # Removing broadcaster from the thread (listener thread wont be there)
                 del threads['broadcaster']
-                for program, thread in threads.items():
-                    #try:
-                        if thread.is_alive():
-                            thread.join()
-                            logger.info(f"{program} has JOINED in Listener")
-                        else:
-                            logger.info(f"{program} was never started")
-                    # No need to put in main queue for success
+                del threads['listener']
+                for program, workers_object in threads.items():
+                    thread = workers_object['thread']
+                    if thread.is_alive():
+                        thread.join()
+                        logger.info(f"{program} thread has joined successfully")
+                    else:
+                        logger.info(f"{program} thread was never started, or has finished already")
+                 # No need to put in main queue for success
                     #except Exception as e:
                     #    logger.critical(f"{program} was not able to join, ERROR: {e}")
                     #    print(traceback.print_exc())

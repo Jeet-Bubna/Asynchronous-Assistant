@@ -12,6 +12,8 @@ def end_main(listening_queue, event, playing_thread:Thread, error = None):
     logger.info("Recieved END. Returning....") 
     try:
         playing_thread.join(timeout=TIME_TO_JOIN_THREAD)
+        logger.info("MUSIC PLAYING THREAD has joined successfully")
+
     except TimeoutError:
         error = TimeoutError
 
@@ -40,8 +42,8 @@ def main(queues, event, run_once = False):
     while isRunning:
         event.wait()
         logger.info("GOT IT! Running program...")
-        main_queue = queues["queue"]
-        listening_queue = queues["listening_queue"]
+        main_queue = queues["main queue"]
+        listening_queue = queues["listener queue"]
         listening_queue.put((random.random() + 1,Packets(content={
             "started":True,
             "function": "music",

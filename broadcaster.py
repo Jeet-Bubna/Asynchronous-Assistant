@@ -19,6 +19,8 @@ def broadcaster(queues, event:None = None, run_once=False):
         logger.info(f"Recieved message: {packet._content}")
         queue = packet._queue["queue"]
         queue.put((priority, packet))
+        if packet._event != None:
+            packet._event.set()
 
         if (packet._content == "end"):
             isRunning = False

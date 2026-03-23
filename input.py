@@ -98,14 +98,17 @@ def input_function(input_list, run_once=False):
             logger.info(f"END COMMAND HAS BEEN PUT IN MAIN QUEUE")
             return "ending"
 
-        if(category != "low confidence"):
-            if run_once:
-                isRunning = False
-            priority = calculatePriority(False)
-            queue = queues[category]
-            worker = workers_list[category]["thread"]
-            event = workers_list[category]["event"]
-            packet = Packets(user_input, {"queue": queue, "listening_queue":queues["listener queue"]}, worker, event) 
-            main_queue.put((priority, packet))
-            logger.info(f"A PACKET {packet} with PRIORITY {priority} has been send to main queue")
+        try:
+            if(category != "low confidence" and category != "lead error"):
+                if run_once:
+                    isRunning = False
+                priority = calculatePriority(False)
+                queue = queues[category]
+                worker = workers_list[category]["thread"]
+                event = workers_list[category]["event"]
+                packet = Packets(user_input, {"queue": queue, "listening_queue":queues["listener queue"]}, worker, event) 
+                main_queue.put((priority, packet))
+                logger.info(f"A PACKET {packet} with PRIORITY {priority} has been send to main queue")
+        except KeyError:
+            logger.critical(f"Key error occured in input function", exc_info=True)
  
