@@ -75,7 +75,7 @@ def calculatePriority(isEnd:bool):
     else:
         return 3
 
-def input_function(input_list):
+def input_function(input_list, run_once=False):
     
     isRunning = True 
 
@@ -99,10 +99,13 @@ def input_function(input_list):
             return "ending"
 
         if(category != "low confidence"):
+            if run_once:
+                isRunning = False
             priority = calculatePriority(False)
             queue = queues[category]
-            worker = workers_list[category]
-            packet = Packets(user_input, {"queue": queue, "listening_queue":queues["listener queue"]}, worker) 
+            worker = workers_list[category]["thread"]
+            event = workers_list[category]["event"]
+            packet = Packets(user_input, {"queue": queue, "listening_queue":queues["listener queue"]}, worker, event) 
             main_queue.put((priority, packet))
             logger.info(f"A PACKET {packet} with PRIORITY {priority} has been send to main queue")
  
