@@ -5,7 +5,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def broadcaster(queues, event):
+def broadcaster(queues, event:None = None, run_once=False):
     isRunning = True
     isEnding = False
     main_queue = queues["main queue"]
@@ -13,14 +13,12 @@ def broadcaster(queues, event):
     logger.debug(f"Type of Main_Queue is: {type(main_queue)}")
     logger.debug(f"object of Main_Queue is: {main_queue}")
     while isRunning:
+        if run_once:
+            isRunning = False
         priority , packet = main_queue.get()
         logger.info(f"Recieved message: {packet._content}")
-        queue:PriorityQueue = packet._queue["queue"]
+        queue = packet._queue["queue"]
         queue.put((priority, packet))
-
-        worker: WorkerThread = packet._worker
-        logger.debug(f"THE STATUS OF THE WORKER IS: {worker.is_alive()}")
-        logger.info(f"{worker} has been passed [{packet._content}], with queue [{packet._queue}] in queue [{queue}]") 
 
         if (packet._content == "end"):
             isRunning = False
@@ -30,23 +28,19 @@ def broadcaster(queues, event):
             del queues['main queue']
             del queues['listener queue']
             for queue in queues.values():
-                queue.put((1, Packets(content="end", queue=main_queue, worker=worker)))
+                queue.put((1, Packets(content="end", queue=main_queue)))
 
             logger.info(f"ALL QUEUES HAVE BEEN SENT THE END SIGNAL")
 
-        if worker.is_alive() == False: 
-            worker.update_args((packet._content, packet._queue))
-            worker.start()
-
     while isEnding:
+        if run_once:
+            isEnding = False
         priortiy, packet = main_queue.get()
         try:
             error = packet._content["error"]
             if error:
                 logger.critical(f"BROADCASTER RECIEVED THE ERROR:{error}")
-                worker = packet._content["worker"]
-                #Gotta do something for now, just print comment
-                print("Ohnoooo errorrrrrr idk how to handle rn")
+                return "ended"
         except (KeyError, TypeError):
             pass
       
