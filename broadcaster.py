@@ -41,6 +41,11 @@ def broadcaster(queues, event:None = None, run_once=False):
             if error:
                 logger.critical(f"BROADCASTER RECIEVED THE ERROR:{error}")
                 return "ended"
+            
+            success = packet._content["success"]
+            if success:
+                logger.info("Broadcaster ensures all threads are closed")
+                return "success"
         except (KeyError, TypeError):
             pass
       
