@@ -44,12 +44,13 @@ def categoriser(text:str, embeddings, model):
     Rest are delt with embeddings
     """
     cat = ""
+
     jarvis_pattern = r"^jarvis\b"
     match = re.match(jarvis_pattern, text)
     if not match:
         logger.info("Lead not found in command")
         return "lead error"
-
+    
     pattern = r"^(jarvis)\s+(.*?)\s+(?:of|by|from|in|for)\s+(.*)$"
     match = re.match(pattern, text, re.IGNORECASE)
     if (match):
