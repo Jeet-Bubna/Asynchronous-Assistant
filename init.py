@@ -85,7 +85,7 @@ def init_threads(queues, run_test=False) :
 def init_embeddings():
     
     if os.path.exists(MODEL_PATH):
-        logger.info("Loading {MODEL_NAME} locally")
+        logger.info(f"Loading {MODEL_NAME} locally")
         os.environ['TRANSFORMERS_OFFLINE'] = '1'
         os.environ['HF_HUB_OFFLINE'] = '1'
         model = ORTModelForFeatureExtraction.from_pretrained(MODEL_PATH, local_files_only=True)
