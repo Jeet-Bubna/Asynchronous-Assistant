@@ -9,6 +9,7 @@ from settings import FUNCTIONS_LIST, EMBEDDING_FILE, CATEGORIES, MODEL_PATH, MOD
 import numpy as np
 from optimum.onnxruntime import ORTModelForFeatureExtraction
 from transformers import AutoTokenizer, pipeline
+from functools import partial
 
 from queue import PriorityQueue
 from broadcaster import broadcaster
@@ -135,9 +136,9 @@ def init_embeddings(test_calling=False):
 
     if os.path.exists(EMBEDDING_FILE) and not test_calling:
         logger.log(20, "Found existing embeddings. Loading...")
-        embeddings = np.load(EMBEDDING_FILE, allow_pickle=True)
-        logger.debug(f"TYPE: {type(embeddings)}")
-        logger.debug(f"CONTENT: {embeddings}")
+        embeddings_object = np.load(EMBEDDING_FILE, allow_pickle=True).item()
+        logger.debug(f"TYPE: {type(embeddings_object)}")
+        logger.debug(f"CONTENT: {embeddings_object}")
 
     else:
         logger.log(20, "No embeddings found. Generating now (this may take a moment)...")
@@ -174,7 +175,10 @@ def init_embeddings(test_calling=False):
             np.save(EMBEDDING_FILE, embeddings_object)  
     
     logger.log(10, f"THE EMBEDDINGS OBJECT IS:")    
-    return {"embeddings": embeddings_object, "encode": encode}
+
+    filled_encode = partial(encode, tokenizer=tokenizer, model=model)
+
+    return {"embeddings": embeddings_object, "encode": filled_encode}
 
 """
 {
