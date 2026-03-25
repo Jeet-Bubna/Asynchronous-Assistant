@@ -1,14 +1,15 @@
 import unittest
 from threading import Event
 from unittest.mock import patch, MagicMock
-from input import input_function, categorise_embeddings, categoriser
+from input import input_function,categoriser
+from categorizer import categorise_embeddings
 import numpy as np
 from classes import WorkerThread, PriorityQueue, Packets
 
 class TestInput(unittest.TestCase):
 
-    @patch('input.logger')
-    @patch('input.CATEGORIES', {'cat1': 0})
+    @patch('categorizer.logger')
+    @patch('categorizer.CATEGORIES', {'cat1': 0})
     def test_categorise_embeddings(self, mocked_logger):
         mock_embeddings = np.array([1.0, 0.0])
         mock_encode = lambda x: np.array([0.0, 1.0])
@@ -28,7 +29,7 @@ class TestInput(unittest.TestCase):
 
         mocked_logger.critical.assert_called()
 
-    @patch('input.logger')
+    @patch('categorizer.logger')
     def test_categoriser(self, mocked_logger):
         mock_embeddings = "mock embeddings"
         mock_model = "mock model"
