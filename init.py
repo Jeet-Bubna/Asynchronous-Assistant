@@ -5,14 +5,12 @@ import os
 from classes import WorkerThread
 from threading import Event
 from settings import FUNCTIONS_LIST, EMBEDDING_FILE, CATEGORIES, MODEL_PATH, MODEL_NAME
-from typing import Callable
 
 import numpy as np
 from optimum.onnxruntime import ORTModelForFeatureExtraction
 from transformers import AutoTokenizer, pipeline
 
 from queue import PriorityQueue
-from input import input_function
 from broadcaster import broadcaster
 from listener import listener
 
@@ -82,8 +80,35 @@ def init_threads(queues, run_test=False) :
     logging.log(20, "Workers have been initialised")
     return worker_list
 
-def init_embeddings():
-    
+def encode(sentence, tokenizer, model):
+    """
+    Takes a sentence, and uses the extractor to return 
+    a normalised embedding vector
+    """
+
+    # Tokenize the text, and allow padding and truncation, to get equal spaced arrays
+    inputs = tokenizer(
+        sentence,
+        padding=True,
+        truncation=True,
+        return_tensors="np"
+    )
+
+    # run onxx model 
+    outputs = model(**inputs)
+
+    # Mean pooling: Dont use CLS token [the first token in the array which is 
+    # noramlly used to classify sentences] because this model is trained to 
+    # excel at mean pooling, and also outputs[0] is the last hidden state
+    embeddings = np.mean(outputs[0], axis=1)
+
+    #Normalisation - to basically make calucaltion easier and mitigate the effect
+    # of the frequency of words in long sentences, by basicaly making the relative
+    # vector have a square length of 1 to calucalte cosine similarity
+    norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
+    return embeddings / norms        
+
+def set_up_embeddings():
     if os.path.exists(MODEL_PATH):
         logger.info(f"Loading {MODEL_NAME} locally")
         os.environ['TRANSFORMERS_OFFLINE'] = '1'
@@ -96,50 +121,59 @@ def init_embeddings():
         model = ORTModelForFeatureExtraction.from_pretrained(MODEL_NAME, export=True)
         tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
         model.save_pretrained(MODEL_PATH)
-        print(f"Model saved to {MODEL_PATH}")
+        logger.info(f"Model saved to {MODEL_PATH}")
+    
+    return model, tokenizer
 
-    def encode(sentence):
-        """
-        Takes a sentence, and uses the extractor to return 
-        a normalised embedding vector
-        """
+def init_embeddings(test_calling=False):
+    if not test_calling: 
+        model, tokenizer = set_up_embeddings()
+    else:
+        model = "model"
+        tokenizer = "tokenizer"
 
-        # Tokenize the text, and allow padding and truncation, to get equal spaced arrays
-        inputs = tokenizer(
-            sentence,
-            padding=True,
-            truncation=True,
-            return_tensors="np"
-        )
-
-        # run onxx model 
-        outputs = model(**inputs)
-
-        # Mean pooling: Dont use CLS token [the first token in the array which is 
-        # noramlly used to classify sentences] because this model is trained to 
-        # excel at mean pooling, and also outputs[0] is the last hidden state
-        embeddings = np.mean(outputs[0], axis=1)
-
-        #Normalisation - to basically make calucaltion easier and mitigate the effect
-        # of the frequency of words in long sentences, by basicaly making the relative
-        # vector have a square length of 1 to calucalte cosine similarity
-        norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
-        return embeddings / norms        
-
-    if os.path.exists(EMBEDDING_FILE):
+    if os.path.exists(EMBEDDING_FILE) and not test_calling:
         logger.log(20, "Found existing embeddings. Loading...")
         embeddings = np.load(EMBEDDING_FILE, allow_pickle=True)
         logger.debug(f"TYPE: {type(embeddings)}")
         logger.debug(f"CONTENT: {embeddings}")
+
     else:
         logger.log(20, "No embeddings found. Generating now (this may take a moment)...")
-        extractor = pipeline("feature-extraction", model=model, tokenizer=tokenizer) # type: ignore
-        categories = [description for description in CATEGORIES.values()]
-        embeddings = encode(sentence=categories)
-        np.save(EMBEDDING_FILE, embeddings)
+        if not test_calling:
+            extractor = pipeline("feature-extraction", model=model, tokenizer=tokenizer) # type: ignore
+        # L1 Embeddings
+        l1_embeddings = {}
+        for cat, obj in CATEGORIES.items():
+            sentence = obj["general description"] 
+            embedding = encode(sentence, tokenizer, model)
+            l1_embeddings[cat] = embedding
+        
+        # L2 Embeddings
+        l2_embeddings = {}
+        for cat, obj in CATEGORIES.items():
+            commands = obj["commands"]
+            embeds = {}
+            for command, sentences in commands.items():
+                embeddings = []
+                for sentence in sentences:
+                    encoded = encode(sentence, tokenizer, model) 
+                    embeddings.append(encoded)
+                embeds[command] = embeddings
+            l2_embeddings[cat] = embeds
+
+        embeddings_object = {
+            "l1":l1_embeddings,
+            "l2":l2_embeddings
+        }
+
+        logger.debug(embeddings_object)
+
+        if not test_calling:
+            np.save(EMBEDDING_FILE, embeddings_object)  
     
     logger.log(10, f"THE EMBEDDINGS OBJECT IS:")    
-    return {"embeddings": embeddings, "encode": encode}
+    return {"embeddings": embeddings_object, "encode": encode}
 
 """
 {

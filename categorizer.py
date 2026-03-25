@@ -1,25 +1,28 @@
-from settings import ACCEPTABLE_RATIO, CATEGORIES, FUNCTIONS_LIST
+from settings import ACCEPTABLE_RATIO, CATEGORIES, FUNCTIONS_LIST, ASSISTANT_NAME
 import re
 import numpy as np
 import logging
 
 logger = logging.getLogger(__name__)
 
+def calculate_main_embeddings(embeddings, text_embedding):
+    similarities = np.dot(embeddings, text_embedding.T).flatten()
+    best_idx = np.argmax(similarities)
+    confidence = similarities[best_idx]
+    category = [cat for cat in CATEGORIES.keys()][best_idx]
+
+    if confidence < ACCEPTABLE_RATIO:
+        logger.info("Confidence below acceptable ratio - no category detected")
+        return "low confidence"
+    else:
+        return category
+
 def categorise_embeddings(embeddings, encode, text:str):
     try:
         text = text.replace("jarvis", "")
         text_embedding = encode(text)          
-        # Calculate cosine similarity - encode alr uses l2 normalisation, so cosine similarity is just dot product
-        similarities = np.dot(embeddings, text_embedding.T).flatten()
-        best_idx = np.argmax(similarities)
-        confidence = similarities[best_idx]
-        category = [cat for cat in CATEGORIES.keys()][best_idx]
-
-        if confidence < ACCEPTABLE_RATIO:
-            logger.info("Confidence below acceptable ratio - no category detected")
-            return "low confidence"
-        else:
-            return category
+        
+        main_category = calculate_main_embeddings(embeddings, text_embedding)
 
     except KeyError:
         logger.critical('Detect Category failed - key error', exc_info=True)
@@ -34,21 +37,15 @@ def categorise_embeddings(embeddings, encode, text:str):
         return "index error"
 
 def categoriser(text:str, embeddings, model):
-    """
-    Categorise the text according to embeddings
-
-    Approach: Regex is applied first to save timem on simple requests.
-    Rest are delt with embeddings
-    """
     cat = ""
 
-    jarvis_pattern = r"^jarvis\b"
+    jarvis_pattern = rf"^{ASSISTANT_NAME.lower()}\b"
     match = re.match(jarvis_pattern, text)
     if not match:
         logger.info("Lead not found in command")
         return "lead error"
     
-    pattern = r"^(jarvis)\s+(.*?)\s+(?:of|by|from|in|for)\s+(.*)$"
+    pattern = rf"^({ASSISTANT_NAME.lower()})\s+(.*?)\s+(?:of|by|from|in|for)\s+(.*)$"
     match = re.match(pattern, text, re.IGNORECASE)
     if (match):
         logger.log(20, "REGEX Pattern Matched....") 

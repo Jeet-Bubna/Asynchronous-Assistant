@@ -1,5 +1,7 @@
 from modules import music, timer, search
 
+ASSISTANT_NAME = "jarvis"
+
 FUNCTIONS_LIST = {
     "functions": [
         {
@@ -21,7 +23,17 @@ EMBEDDING_FILE = "stored_embeddings.npy"
 
 ACCEPTABLE_RATIO = 0.5
 
-CATEGORIES  = {'music': 'music player', 'timer':'timer', 'search':'search', 'end':'end the program'}  
+CATEGORIES  = {
+    "music":{
+        "general description":"music player",
+        "commands":{
+            "play":["play music", "start the music", "put on some tunes"],
+            "stop":["stop"],
+            "resume":["resume", "resume music", "restart music"],
+            "switch":["change song", "switch song", "change music"]
+        }
+    }
+}
 
 MODEL_PATH = "./local_model"
 

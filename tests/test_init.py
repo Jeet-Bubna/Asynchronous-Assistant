@@ -1,7 +1,8 @@
 import unittest
+from unittest.mock import patch, MagicMock
 from classes import WorkerThread
 from queue import PriorityQueue
-from init import init_threads
+from init import init_threads, init_embeddings
 
 class TestInit(unittest.TestCase):
 
@@ -19,6 +20,25 @@ class TestInit(unittest.TestCase):
             self.assertIsInstance(name, str)
             self.assertIsNotNone(thread_object)
             self.assertIsInstance(thread_object, dict)
+    
+    @patch('init.encode')
+    @patch('init.set_up_embeddings')
+    def test_init_embeddings(self,mocked_setup, mocked_encode):
+        mocked_encode.return_value = "mocked"
+        mocked_setup.return_value = ("model", "tokenizer")
+        result = init_embeddings(test_calling=True)
+
+        self.assertIsInstance(result, dict)
+        for cat, embed in result["embeddings"]["l1"].items():
+            self.assertIsInstance(cat, str)
+
+        for cat, obj in result["embeddings"]["l2"].items():
+            self.assertIsInstance(cat, str)
+            self.assertIsInstance(obj, dict)
+
+            for command, embeds in obj.items():
+                self.assertIsInstance(command, str)
+                self.assertIsInstance(embeds, list)
 
 if __name__ == "__main__":
     unittest.main()
