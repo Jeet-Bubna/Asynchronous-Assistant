@@ -121,6 +121,7 @@ def set_up_embeddings():
         model = ORTModelForFeatureExtraction.from_pretrained(MODEL_NAME, export=True)
         tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
         model.save_pretrained(MODEL_PATH)
+        tokenizer.save_pretrained(MODEL_PATH)
         logger.info(f"Model saved to {MODEL_PATH}")
     
     return model, tokenizer
