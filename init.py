@@ -154,22 +154,21 @@ def init_embeddings(test_calling=False):
         # L2 Embeddings
         l2_embeddings = {}
         for cat, obj in CATEGORIES.items():
-            commands = obj["commands"]
-            embeds = {}
-            for command, sentences in commands.items():
-                embeddings = []
-                for sentence in sentences:
-                    encoded = encode(sentence, tokenizer, model) 
-                    embeddings.append(encoded)
-                embeds[command] = embeddings
-            l2_embeddings[cat] = embeds
+            if not cat == "end":
+                commands = obj["commands"]
+                embeds = {}
+                for command, sentences in commands.items():
+                    embeddings = []
+                    for sentence in sentences:
+                        encoded = encode(sentence, tokenizer, model) 
+                        embeddings.append(encoded)
+                    embeds[command] = embeddings
+                l2_embeddings[cat] = embeds
 
         embeddings_object = {
             "l1":l1_embeddings,
             "l2":l2_embeddings
         }
-
-        logger.debug(embeddings_object)
 
         if not test_calling:
             np.save(EMBEDDING_FILE, embeddings_object)  
