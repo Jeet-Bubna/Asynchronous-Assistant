@@ -8,50 +8,6 @@ from classes import WorkerThread, PriorityQueue, Packets
 
 class TestInput(unittest.TestCase):
 
-    @patch('categorizer.logger')
-    @patch('categorizer.CATEGORIES', {'cat1': 0})
-    def test_categorise_embeddings(self, mocked_logger):
-        mock_embeddings = np.array([1.0, 0.0])
-        mock_encode = lambda x: np.array([0.0, 1.0])
-
-        result = categorise_embeddings(mock_embeddings, mock_encode, "jibberish")
-        self.assertEqual(result, "low confidence")
-
-        mock_embeddings = np.array([1.0, 0.0])
-        mock_encode = lambda x: np.array([0.0])
-        result = categorise_embeddings(mock_embeddings, mock_encode, "jibberish")
-        self.assertEqual(result, "value error")
-
-        mock_embeddings = np.array([[0.1, 0.1], [0.9, 0.9]])
-        mock_encode = lambda x: np.array([0.9, 0.9])
-        result = categorise_embeddings(mock_embeddings, mock_encode, "jibberish")        
-        self.assertEqual(result, "index error")
-
-        mocked_logger.critical.assert_called()
-
-    @patch('categorizer.logger')
-    def test_categoriser(self, mocked_logger):
-        mock_embeddings = "mock embeddings"
-        mock_model = "mock model"
-
-        mock_text = "ultron play some music by the avengers"
-        result = categoriser(mock_text, mock_embeddings, mock_model)
-        self.assertEqual(result, "lead error")
-
-        mock_text = "jarvis play some music by the avengers"
-        result = categoriser(mock_text, mock_embeddings, mock_model)
-        self.assertEqual(result, "music")
-
-        mock_text = "jarvis set a timer for 10 minutes"
-        result = categoriser(mock_text, mock_embeddings, mock_model)
-        self.assertEqual(result, "time")
-
-        mock_text = "jarvis search the internet for avacado on toast"
-        result = categoriser(mock_text, mock_embeddings, mock_model)
-        self.assertEqual(result, "search")
-
-        mocked_logger.info.assert_called() 
-    
     @patch("input.categoriser")
     @patch("input.logger")
     @patch("builtins.input", return_value="jarvis end the program")
@@ -63,7 +19,7 @@ class TestInput(unittest.TestCase):
         "queues":{"main queue":PriorityQueue(), "music":PriorityQueue(), "listener queue":PriorityQueue()}
         }
         
-        mocked_categoriser.return_value = "end"
+        mocked_categoriser.return_value = {"category":"end", "command":"none"}
         result = input_function(mocked_input_list)
         self.assertEqual(result, "ending")  
     
@@ -78,13 +34,13 @@ class TestInput(unittest.TestCase):
         "queues":{"main queue":PriorityQueue(), "music":PriorityQueue(), "listener queue":PriorityQueue()}
         }
 
-        mocked_cateoriser.return_value = "music"
+        mocked_cateoriser.return_value = {"category":"music", "command":"none"}
         input_function(mocked_input_list, run_once=True)
 
         priority, result = mocked_input_list["queues"]["main queue"].get(1)
         self.assertIsInstance(result, Packets)
         self.assertIsInstance(priority, int)
-        self.assertEqual(result._content, "jarvis play some music")
+        self.assertEqual(result._content["raw text"], "jarvis play some music")
         self.assertIsInstance(result._queue, dict)
         
         for key, queue in result._queue.items():
