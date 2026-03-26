@@ -25,13 +25,16 @@ ACCEPTABLE_RATIO = 0.5
 
 CATEGORIES  = {
     "music":{
-        "general description":"music player",
+        "general description":"commands for playing, pausing, stopping, and ressuming music playback",
         "commands":{
             "play":["play music", "start the music", "put on some tunes"],
-            "stop":["stop"],
+            "stop":["stop the music"],
             "resume":["resume", "resume music", "restart music"],
             "switch":["change song", "switch song", "change music"]
         }
+    },
+    "end":{
+        "general description":"command to end the program"
     }
 }
 
